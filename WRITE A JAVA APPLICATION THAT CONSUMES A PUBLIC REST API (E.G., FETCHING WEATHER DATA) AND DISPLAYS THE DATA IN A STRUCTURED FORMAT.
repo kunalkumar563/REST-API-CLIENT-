@@ -1,0 +1,69 @@
+/**
+ * HTTP Request Handler and JSON Parser
+ *
+ * This Java program makes an HTTP GET request to a public API,
+ * retrieves a JSON response, and parses it using the org.json library.
+ */
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+import org.json.JSONObject;
+
+public class HttpJsonHandler {
+    
+    private static final String API_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current_weather=true";
+    
+    public static String fetchJsonResponse() {
+        try {
+            URL url = new URL(API_URL);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+            
+            if (conn.getResponseCode() != 200) {
+                return "Error: Failed to fetch data. HTTP Response Code: " + conn.getResponseCode();
+            }
+            
+            Scanner scanner = new Scanner(conn.getInputStream());
+            StringBuilder response = new StringBuilder();
+            while (scanner.hasNext()) {
+                response.append(scanner.nextLine());
+            }
+            scanner.close();
+            conn.disconnect();
+            
+            return response.toString();
+            
+        } catch (IOException e) {
+            return "Error fetching data: " + e.getMessage();
+        }
+    }
+    
+    public static void parseAndDisplayJson(String jsonResponse) {
+        try {
+            JSONObject jsonObject = new JSONObject(jsonResponse);
+            JSONObject currentWeather = jsonObject.getJSONObject("current_weather");
+            
+            System.out.println("Parsed Weather Data:");
+            System.out.println("Temperature: " + currentWeather.getDouble("temperature") + "°C");
+            System.out.println("Wind Speed: " + currentWeather.getDouble("windspeed") + " km/h");
+            System.out.println("Wind Direction: " + currentWeather.getInt("winddirection") + "°");
+            System.out.println("Time: " + currentWeather.getString("time"));
+            
+        } catch (Exception e) {
+            System.out.println("Error parsing JSON: " + e.getMessage());
+        }
+    }
+    
+    public static void main(String[] args) {
+        System.out.println("Fetching weather data...");
+        String jsonResponse = fetchJsonResponse();
+        if (!jsonResponse.startsWith("Error")) {
+            parseAndDisplayJson(jsonResponse);
+        } else {
+            System.out.println(jsonResponse);
+        }
+    }
+}
